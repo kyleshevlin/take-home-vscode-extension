@@ -1,16 +1,6 @@
 import * as vscode from 'vscode'
 
-const { registerCommand } = vscode.commands
-
 const PROJECT_NAME = 'kyles-github-take-home'
-
-function displayHelloWorld() {
-  vscode.window.showInformationMessage(`Hello World from ${PROJECT_NAME}!`)
-}
-
-const COMMAND_MAP = {
-  helloWorld: displayHelloWorld,
-}
 
 /**
  * This method is called when your extension is activated
@@ -19,11 +9,16 @@ const COMMAND_MAP = {
 export function activate(context: vscode.ExtensionContext) {
   console.log(`Extension "${PROJECT_NAME}" is now active.`)
 
-  const commandDisposers = Object.entries(COMMAND_MAP).map(([command, fn]) =>
-    registerCommand(`${PROJECT_NAME}.${command}`, fn)
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      // TODO: add TS and activationEvent in package.json
+      'javascript',
+      new Refactorer(),
+      {
+        providedCodeActionKinds: Refactorer.providedCodeActionKinds,
+      }
+    )
   )
-
-  context.subscriptions.push(...commandDisposers)
 }
 
 /**
@@ -31,4 +26,73 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
   console.log(`Extension "${PROJECT_NAME}" is now inactive`)
+}
+
+/**
+ * Goal
+ *
+ * I want to be able to quickly turn:
+ *
+ * ```
+ * return value
+ * ```
+ *
+ * into:
+ *
+ * ```
+ * const result = value
+ * console.log({ result })
+ * return result
+ */
+export class Refactorer implements vscode.CodeActionProvider {
+  public static readonly providedCodeActionKinds = [
+    vscode.CodeActionKind.QuickFix,
+  ]
+
+  public provideCodeActions(
+    document: vscode.TextDocument,
+    range: vscode.Range | vscode.Selection
+  ) {
+    if (!this.determineIfActionable(document, range)) {
+      return
+    }
+
+    const resultLogger = this.createResultLoggerAction(document, range)
+
+    return [resultLogger]
+  }
+
+  /**
+   * This method determines if the current range for the document is actionable
+   */
+  private determineIfActionable(
+    document: vscode.TextDocument,
+    range: vscode.Range | vscode.Selection
+  ) {
+    const start = range.start
+    const line = document.lineAt(start.line)
+
+    // TODO: let's rudimentarily just check for return a space and any character after that.
+    console.log(start, line)
+    return false
+  }
+
+  /**
+   * This method creates the action that will convert a returned value into a
+   * "result logger"
+   */
+  private createResultLoggerAction(
+    document: vscode.TextDocument,
+    range: vscode.Range | vscode.Selection
+  ) {
+    const action = new vscode.CodeAction(
+      'Refactor into result logger',
+      vscode.CodeActionKind.QuickFix
+    )
+    action.edit = new vscode.WorkspaceEdit()
+    action.isPreferred = true
+    action.edit.replace(document.uri, range, 'TODO: get this to work')
+
+    return action
+  }
 }
