@@ -10,7 +10,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:javascript"
+    "onLanguage:javascript",
+    "onLanguage:typescript"
   ],
   "main": "./out/extension.js",
   "scripts": {
@@ -22,9 +23,11 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@types/estree": "^0.0.50",
     "@types/glob": "^7.1.4",
     "@types/mocha": "^9.0.0",
     "@types/node": "14.x",
+    "@types/source-map": "^0.5.7",
     "@types/vscode": "^1.62.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
@@ -35,6 +38,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@typescript-eslint/typescript-estree": "^5.3.1"
+    "@typescript-eslint/typescript-estree": "^5.3.1",
+    "astring": "^1.7.5"
   }
 }

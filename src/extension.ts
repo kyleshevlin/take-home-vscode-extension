@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as tsEsTree from '@typescript-eslint/typescript-estree'
+import { generate } from 'astring'
 
 const PROJECT_NAME = 'kyles-github-take-home'
 
@@ -12,8 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
-      // TODO: add TS and activationEvent in package.json
-      'javascript',
+      ['javascript', 'typescript'],
       new Refactorer(),
       {
         providedCodeActionKinds: Refactorer.providedCodeActionKinds,
@@ -47,7 +47,7 @@ export function deactivate() {
  */
 export class Refactorer implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [
-    vscode.CodeActionKind.QuickFix,
+    vscode.CodeActionKind.Refactor,
   ]
 
   public provideCodeActions(
@@ -55,11 +55,8 @@ export class Refactorer implements vscode.CodeActionProvider {
     range: vscode.Range | vscode.Selection
   ) {
     if (!this.determineIfActionable(document, range)) {
-      console.log('nope')
       return
     }
-
-    console.log('yep')
 
     const resultLogger = this.createResultLoggerAction(document, range)
 
@@ -75,9 +72,8 @@ export class Refactorer implements vscode.CodeActionProvider {
   ) {
     const start = range.start
     const line = document.lineAt(start.line)
-    const ast = tsEsTree.parse(line.text)
 
-    return hasReturnStatementWithArgument(ast)
+    return hasReturnValue(line.text)
   }
 
   /**
@@ -88,24 +84,54 @@ export class Refactorer implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range | vscode.Selection
   ) {
+    const start = range.start
+    const line = document.lineAt(start.line)
+    // TODO: I would prefer not to create an action at all if there's somehow no return value
+    const value = getReturnValue(line.text) || ''
+
     const action = new vscode.CodeAction(
       'Refactor into result logger',
-      vscode.CodeActionKind.QuickFix
+      vscode.CodeActionKind.Refactor
     )
     action.edit = new vscode.WorkspaceEdit()
     action.isPreferred = true
-    action.edit.replace(document.uri, range, 'TODO: get this to work')
+    action.edit.replace(
+      document.uri,
+      line.range,
+      createResultLoggerString(value)
+    )
 
     return action
   }
 }
 
-// TODO: improve type later
-function hasReturnStatementWithArgument(ast: tsEsTree.AST<any>) {
-  if (!ast || ast.type !== 'Program' || !ast.body.length) {
-    return false
+function getAST(text: string) {
+  return tsEsTree.parse(text)
+}
+
+function getReturnValue(text: string) {
+  const ast = getAST(text)
+
+  if (ast.type !== 'Program' || !ast.body.length) {
+    return
   }
 
   const item = ast.body[0]
-  return item.type === 'ReturnStatement' && item.argument !== null
+
+  if (item.type !== 'ReturnStatement' || item.argument === null) {
+    return
+  }
+
+  const arg = item.argument
+
+  return generate(arg)
+}
+
+function hasReturnValue(text: string) {
+  return Boolean(getReturnValue(text))
+}
+
+function createResultLoggerString(value: string): string {
+  // TODO: could improve by adding whitespacing at the start of lines to match
+  return `const result = ${value};\nconsole.log({ result });\nreturn result;`
 }
