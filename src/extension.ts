@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as tsEsTree from '@typescript-eslint/typescript-estree'
 
 const PROJECT_NAME = 'kyles-github-take-home'
 
@@ -54,8 +55,11 @@ export class Refactorer implements vscode.CodeActionProvider {
     range: vscode.Range | vscode.Selection
   ) {
     if (!this.determineIfActionable(document, range)) {
+      console.log('nope')
       return
     }
+
+    console.log('yep')
 
     const resultLogger = this.createResultLoggerAction(document, range)
 
@@ -71,10 +75,9 @@ export class Refactorer implements vscode.CodeActionProvider {
   ) {
     const start = range.start
     const line = document.lineAt(start.line)
+    const ast = tsEsTree.parse(line.text)
 
-    // TODO: let's rudimentarily just check for return a space and any character after that.
-    console.log(start, line)
-    return false
+    return hasReturnStatementWithArgument(ast)
   }
 
   /**
@@ -95,4 +98,14 @@ export class Refactorer implements vscode.CodeActionProvider {
 
     return action
   }
+}
+
+// TODO: improve type later
+function hasReturnStatementWithArgument(ast: tsEsTree.AST<any>) {
+  if (!ast || ast.type !== 'Program' || !ast.body.length) {
+    return false
+  }
+
+  const item = ast.body[0]
+  return item.type === 'ReturnStatement' && item.argument !== null
 }
