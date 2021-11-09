@@ -1,4 +1,4 @@
-# Github Take Home VSCode Extension
+# Take Home VSCode Extension
 
 I have always wanted a simple codemod/refactor that would do the following, turn:
 
