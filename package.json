@@ -1,6 +1,6 @@
 {
-  "name": "kyles-github-take-home",
-  "displayName": "kyles-github-take-home",
+  "name": "kyles-take-home-vscode-extension",
+  "displayName": "kyles-take-home-vscode-extension",
   "description": "Don't know yet, it's waiting to be discovered",
   "version": "0.0.1",
   "engines": {

@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as tsEsTree from '@typescript-eslint/typescript-estree'
 import { generate } from 'astring'
 
-const PROJECT_NAME = 'kyles-github-take-home'
+const PROJECT_NAME = 'kyles-take-home-vscode-extension'
 
 /**
  * This method is called when your extension is activated
